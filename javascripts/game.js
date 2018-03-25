@@ -29,15 +29,26 @@ function invisibleElement(elementID) {
 	
 //Main game functions
 var player={version:0,
-	build:1,
+	build:2,
 	playtime:0,
-	points:new Decimal(0),
+	points:new Decimal(10),
 	totalPoints:new Decimal(0),
 	generatorsBought:[0,0,0,0,0,0,0,0,0],
+	energy:{consumedPoints:new Decimal(0),
+		amount:0,
+		genPower:0,
+		plasmaPower:0},
+	updateRate:20,
 	lastTick:new Date().getTime()}
 	
-lastSave=0
 var gameLoopInterval
+var tickspeed=0
+var startTime
+var ticked=true
+var lastSave=0
+var pointsPerSecond=0
+var pointsPerTick=0
+var unpoweredEnergy=0
 
 function init() {
 	var tempSave=localStorage.getItem('UEIG_save')
@@ -46,17 +57,48 @@ function init() {
 	load(tempSave)
 }
 
-function gameLoop() {
+function gameTick() {
 	var currentTime = new Date().getTime()
 	if (player.lastTick>0) {
 		if (currentTime-lastSave>=60000) {
 			save()
 		}
 		
-		var diff=(currentTime-player.lastUpdate)/1000
+		var diff=(currentTime-player.lastTick)/1000
 		player.playtime+=diff
+		
+		//Change the values!
+		pointsPerSecond=new Decimal(0)
+		for (var tier=1;tier<9;tier++) {
+			pointsPerSecond=pointsPerSecond.add(getGenMult(tier))
+		}
+		pointsPerTick=pointsPerSecond.times(diff)
+		
+		player.points=player.points.add(pointsPerTick)
+		player.totalPoints=player.totalPoints.add(pointsPerTick)
 	}
 	player.lastTick=currentTime
+	
+	updateElement('points',format(player.points)+' points')
+	updateElement('pointsRate',format(pointsPerSecond)+'/s')
+}
+
+function gameLoop() {
+	if (ticked) {
+		ticked=false
+		setTimeout(function(){
+			startTime=new Date().getTime()
+			try {
+				gameTick()
+			} catch (e) {
+				console.log('A game error has occured:')
+				console.error(e)
+			}
+			tickspeed=Math.max((new Date().getTime()-startTime)*0.2+tickspeed*0.8,1000/player.updateRate)
+			startTime=new Date().getTime()
+			ticked=true
+		},tickspeed-1000/player.updateRate)
+	}
 }
 
 function save() {
@@ -78,9 +120,15 @@ function load(save) {
 		//Update savefile to new versions
 		if (savefile.version<1) {
 			//v1 build 1 is the first build!
-			if (savefile.build<2) { /*
-				(something)
-*/			}
+			if (savefile.build<2) {
+				if (savefile.points==0) savefile.points=10
+				savefile.playtime=0
+				savefile.energy={consumedPoints:0,
+					amount:0,
+					genPower:0,
+					plasmaPower:0}
+				savefile.updateRate=20
+			}
 			//savefile.build=0
 		}
 /*		if (savefile.version<2) {
@@ -92,6 +140,7 @@ function load(save) {
 		//Turn string to Decimal on some values
 		savefile.points=new Decimal(savefile.points)
 		savefile.totalPoints=new Decimal(savefile.totalPoints)
+		savefile.energy.consumedPoints=new Decimal(savefile.energy.consumedPoints)
 		
 		//Check if it is compatible
 		if (player.version<savefile.version) throw 'Since you are playing in version '+player.version+', your savefile that is updated in version '+savefile.version+' has errors to the version you are playing.\nYour savefile has been discarded.'
@@ -108,13 +157,13 @@ function load(save) {
 		player=savefile
 		console.log('Save loaded!')
 		
-		gameLoopInterval=setInterval(function(){gameLoop()},50)
+		gameLoopInterval=setInterval(function(){gameLoop()},1000/player.updateRate)
 		return false
 	} catch (e) {
 		console.log('Your save has failed to load:')
 		console.error(e)
 		
-		gameLoopInterval=setInterval(function(){gameLoop()},50)
+		gameLoopInterval=setInterval(function(){gameLoop()},1000/player.updateRate)
 		return true
 	}
 }
@@ -150,4 +199,34 @@ function reset(tier) {
 	}
 }
 
+function format(value) {
+	if (!(value instanceof Decimal)) value=new Decimal(value)
+		
+	var mantissa
+	if (value.lt(1e3)) {
+		mantissa=value.toFixed(0)
+		if (parseFloat(mantissa)!=1e3) return mantissa
+	}
+	var unencoded=format1OoMGroup(value)
+	if (Decimal.gte(unencoded.exponent,1e5)) {
+		var unencodedExp=format1OoMGroup(new Decimal(unencoded.exponent))
+		return unencoded.mantissa+'e'+unencodedExp.mantissa+'e'+unencodedExp.exponent
+	}
+	return unencoded.mantissa+'e'+unencoded.exponent
+}
+
+function format1OoMGroup(value) {
+	mantissa=value.mantissa.toFixed(2)
+	var exponent=value.exponent
+	if (parseFloat(mantissa)==10) {
+		mantissa='1.00'
+		if (Decimal.lt(exponent,9007199254740992)) exponent+=1
+	}
+	return {mantissa:mantissa,exponent:exponent}
+}
+
 //Game functions
+function getGenMult(tier) {
+	var mult=Decimal.pow(10,tier-1)
+	return mult.times(player.generatorsBought[tier-1])
+}
