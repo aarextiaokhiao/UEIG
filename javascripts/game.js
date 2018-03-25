@@ -28,12 +28,13 @@ function invisibleElement(elementID) {
 }
 	
 //Main game functions
-var player={version:0,
-	build:2,
+var player={version:0.1,
+	build:1,
 	playtime:0,
 	points:new Decimal(10),
 	totalPoints:new Decimal(0),
 	generatorsBought:[0,0,0,0,0,0,0,0,0],
+	upgrades:[],
 	energy:{consumedPoints:new Decimal(0),
 		amount:0,
 		genPower:0,
@@ -46,11 +47,17 @@ var tickspeed=0
 var startTime
 var ticked=true
 var lastSave=0
+var tab='generators'
+var tabDisplayed=tab
+var costs={gens:[],upgrades:[1e10],energy:0}
+var generatorRates=[]
 var pointsPerSecond=0
 var pointsPerTick=0
 var unpoweredEnergy=0
 
 function init() {
+	updateCosts()
+	
 	var tempSave=localStorage.getItem('UEIG_save')
 	updated=true
 	tickspeed=0
@@ -70,7 +77,8 @@ function gameTick() {
 		//Change the values!
 		pointsPerSecond=new Decimal(0)
 		for (var tier=1;tier<9;tier++) {
-			pointsPerSecond=pointsPerSecond.add(getGenMult(tier))
+			generatorRates[tier-1]=getGenMult(tier)
+			pointsPerSecond=pointsPerSecond.add(generatorRates[tier-1])
 		}
 		pointsPerTick=pointsPerSecond.times(diff)
 		
@@ -81,6 +89,50 @@ function gameTick() {
 	
 	updateElement('points',format(player.points)+' points')
 	updateElement('pointsRate',format(pointsPerSecond)+'/s')
+	
+	if (tab!=tabDisplayed) {
+		showElement(tab,'block')
+		hideElement(tabDisplayed)
+		tabDisplayed=tab
+	}
+	if (tab=='generators') {
+		for (var tier=1;tier<9;tier++) {
+			if (tier==1?true:player.generatorsBought[tier-2]>0) {
+				showElement('gen'+tier,'inline-block')
+				updateElement('gen'+tier+'stuff','x'+player.generatorsBought[tier-1]+'<br>'+format(generatorRates[tier-1])+'/s<br>Cost: '+format(costs.gens[tier-1]))
+				if (player.points.gte(costs.gens[tier-1])) {
+					updateClass('gen'+tier,'shopButton')
+				} else {
+					updateClass('gen'+tier,'shopButton unboughtable')
+				}
+			} else {
+				hideElement('gen'+tier)
+			}
+		}
+		if (player.generatorsBought[7]>0) {
+			hideElement('unlock1')
+			showElement('upgrades','block')
+			for (var id=1;id<2;id++) {
+				if (player.upgrades.includes(id)) {
+					updateClass('upg'+id,'shopButton bought')
+				} else if (player.points.gte(costs.upgrades[id-1])) {
+					updateClass('upg'+id,'shopButton')
+				} else {
+					updateClass('upg'+id,'shopButton unboughtable')
+				}
+			}
+		} else {
+			showElement('unlock1','block')
+			hideElement('upgrades')
+		}
+		if (player.generatorsBought[7]>9) {
+			hideElement('unlock2')
+			showElement('energy','block')
+		} else {
+			showElement('unlock2','block')
+			hideElement('energy')
+		}
+	}
 }
 
 function gameLoop() {
@@ -118,8 +170,8 @@ function load(save) {
 		var savefile=JSON.parse(atob(save))
 		
 		//Update savefile to new versions
-		if (savefile.version<1) {
-			//v1 build 1 is the first build!
+		if (savefile.version<0.1) {
+			//v0 build 1 is the first build!
 			if (savefile.build<2) {
 				if (savefile.points==0) savefile.points=10
 				savefile.playtime=0
@@ -129,14 +181,14 @@ function load(save) {
 					plasmaPower:0}
 				savefile.updateRate=20
 			}
-			//savefile.build=0
+			savefile.build=0
 		}
-/*		if (savefile.version<2) {
+		if (savefile.version<0.2) {
 			if (savefile.build<1) {
-				(something)
+				savefile.upgrades=[]
 			}
 		}
-*/
+
 		//Turn string to Decimal on some values
 		savefile.points=new Decimal(savefile.points)
 		savefile.totalPoints=new Decimal(savefile.totalPoints)
@@ -155,6 +207,9 @@ function load(save) {
 		savefile.build=player.build
 		
 		player=savefile
+		updateCosts()
+		hideElement('exportSave')
+		
 		console.log('Save loaded!')
 		
 		gameLoopInterval=setInterval(function(){gameLoop()},1000/player.updateRate)
@@ -184,7 +239,7 @@ function importSave() {
 }
 
 function reset(tier) {
-	if (tier==Infinity?confirm('If you hard reset, everything including the save will be lost and you have to start over! Are you sure to do that?'):true) {
+	if (tier==Infinity?confirm('If you reset, everything including the save will be lost and you have to start over! Are you sure to do that?'):true) {
 		if (tier==Infinity) {
 			//Hard reset
 			player.playtime=0
@@ -192,10 +247,13 @@ function reset(tier) {
 			
 			localStorage.clear('UEIG_save')
 			save()
+			
+			hideElement('exportSave')
 		}
 		//Tier 1 reset
 		player.points=new Decimal(0)
 		player.generatorsBought=[0,0,0,0,0,0,0,0,0]
+		updateCosts('gens')
 	}
 }
 
@@ -224,9 +282,39 @@ function format1OoMGroup(value) {
 	}
 	return {mantissa:mantissa,exponent:exponent}
 }
+	
+function switchTab(tabName) {
+	tab=tabName
+}
 
 //Game functions
+function updateCosts(id='all') {
+	if (id=='gens'||id=='all') {
+		for (var tier=1;tier<9;tier++) {
+			costs.gens[tier-1]=Decimal.mul(Math.pow(10,tier+(tier-1)/5),Decimal.pow(Math.pow(1.5,(tier+4)/5),player.generatorsBought[tier-1]))
+		}
+	}
+}
+
 function getGenMult(tier) {
 	var mult=Decimal.pow(10,tier-1)
+	if (Decimal.gt(player.generatorsBought[tier-1],10)) mult=mult.times(Decimal.pow(Math.pow(1.111111111111111111,player.upgrades.includes(1)?14/(tier+4):1),BigInteger.subtract(player.generatorsBought[tier-1],10)))
 	return mult.times(player.generatorsBought[tier-1])
+}
+
+function buyGen(tier) {
+	if (player.points.gte(costs.gens[tier-1])) {
+		player.points=player.points.sub(costs.gens[tier-1])
+		player.generatorsBought[tier-1]++
+		updateCosts('gens')
+	}
+}
+
+function buyUpg(id) {
+	if (!player.upgrades.includes(id)) {
+		if (player.points.gte(costs.upgrades[id-1])) {
+			player.points=player.points.sub(costs.upgrades[id-1])
+			player.upgrades.push(id)
+		}
+	}
 }

@@ -1,21 +1,37 @@
 <head>
-	<title>UEIG | v0.0</title>
+	<title>UEIG | v0.1</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
 	<link href='stylesheet.css' rel='stylesheet'>
 	<script type="text/javascript" src="javascripts/magna_numerus.js"></script>
 	<script type="text/javascript" src="javascripts/game.js"></script>
 </head>
 <body onload='init()'>
-	<div id='points'></div>
-	<div id='pointsRate'></div>
-	<div id='genTab'>
-		<div class='genButton' id='gen1'><div class='genLeft'>1</div><div class='genRight' id='gen1stuff'>x0<br>0/s<br>Cost: 10</div><button onclick='buyGen(1)'></button></div>
-		<div class='genButton' id='gen2'><div class='genLeft'>2</div><div class='genRight' id='gen2stuff'>x0<br>0/s<br>Cost: 100</div><button onclick='buyGen(2)'></button></div>
-		<div class='genButton' id='gen3'><div class='genLeft'>3</div><div class='genRight' id='gen3stuff'>x0<br>0/s<br>Cost: 1.00e3</div><button onclick='buyGen(3)'></button></div>
-		<div class='genButton' id='gen4'><div class='genLeft'>4</div><div class='genRight' id='gen4stuff'>x0<br>0/s<br>Cost: 1.00e4</div><button onclick='buyGen(4)'></button></div>
-		<div class='genButton' id='gen5'><div class='genLeft'>5</div><div class='genRight' id='gen5stuff'>x0<br>0/s<br>Cost: 1.00e5</div><button onclick='buyGen(5)'></button></div>
-		<div class='genButton' id='gen6'><div class='genLeft'>6</div><div class='genRight' id='gen6stuff'>x0<br>0/s<br>Cost: 1.00e6</div><button onclick='buyGen(6)'></button></div>
-		<div class='genButton' id='gen7'><div class='genLeft'>7</div><div class='genRight' id='gen7stuff'>x0<br>0/s<br>Cost: 1.00e7</div><button onclick='buyGen(7)'></button></div>
-		<div class='genButton' id='gen8'><div class='genLeft'>8</div><div class='genRight' id='gen8stuff'>x0<br>0/s<br>Cost: 1.00e8</div><button onclick='buyGen(8)'></button></div>
+	<div id='points'>10 points</div>
+	<div id='pointsRate'>0/s</div>
+	<div id='tabs'><table><tr><td><button onclick='switchTab("generators")'>Generators</button></td>
+		<td><button onclick='switchTab("options")'>Options</button></td></tr></table></div>
+	<div id='generators'>
+		<h1>Generators</h1>
+		<div class='shopButton' id='gen1'><div class='genLeft'>1</div><div class='genRight' id='gen1stuff'>x0<br>0/s<br>Cost: 10</div><button onclick='buyGen(1)'></button></div>
+		<div class='shopButton' id='gen2' style='display:none'><div class='genLeft'>2</div><div class='genRight' id='gen2stuff'>x0<br>0/s<br>Cost: 100</div><button onclick='buyGen(2)'></button></div>
+		<div class='shopButton' id='gen3' style='display:none'><div class='genLeft'>3</div><div class='genRight' id='gen3stuff'>x0<br>0/s<br>Cost: 1.00e3</div><button onclick='buyGen(3)'></button></div>
+		<div class='shopButton' id='gen4' style='display:none'><div class='genLeft'>4</div><div class='genRight' id='gen4stuff'>x0<br>0/s<br>Cost: 1.00e4</div><button onclick='buyGen(4)'></button></div><br>
+		<div class='shopButton' id='gen5' style='display:none'><div class='genLeft'>5</div><div class='genRight' id='gen5stuff'>x0<br>0/s<br>Cost: 1.00e5</div><button onclick='buyGen(5)'></button></div>
+		<div class='shopButton' id='gen6' style='display:none'><div class='genLeft'>6</div><div class='genRight' id='gen6stuff'>x0<br>0/s<br>Cost: 1.00e6</div><button onclick='buyGen(6)'></button></div>
+		<div class='shopButton' id='gen7' style='display:none'><div class='genLeft'>7</div><div class='genRight' id='gen7stuff'>x0<br>0/s<br>Cost: 1.00e7</div><button onclick='buyGen(7)'></button></div>
+		<div class='shopButton' id='gen8' style='display:none'><div class='genLeft'>8</div><div class='genRight' id='gen8stuff'>x0<br>0/s<br>Cost: 1.00e8</div><button onclick='buyGen(8)'></button></div>
+		<h1>Upgrades</h1>
+		<div id='unlock1'>(Unlocks at x1 generator 8)</div>
+		<div id='upgrades' style='display:none'><div class='shopButton' id='upg1'><div class='upgDescription'>Bonus for generators is better.</div><div class='upgCost'>Cost: 1.00e10</div><button onclick='buyUpg(1)'></button></div></div>
+		<h1>Energy</h1>
+		<div id='unlock2'>(Unlocks at x10 generator 8)</div>
+		<div id='energy' style='display:none'></div>
 	</div>
+	<div id='options' style='display:none'>
+		<h1>Saving</h1>
+		<table><tr><td><button onclick='save()'>Save</button></td><td><button onclick='exportSave()'>Export</button></td><td><button onclick='importSave()'>Import</button></td><td><button onclick='reset(Infinity)'>Reset game</button></td></tr></table>
+		<div id='exportSave' style='display:none'>Here is your export save. Enjoy! <input id='exportText' style='width: 480px'></input></div>
+	</div>
+	<div id='footerBlock'></div>
+	<div id='footer'>How to play (coming soon) | Change log (coming soon) | <a href="https://discord.gg/hkf8Msg" target="_newtab">Discord</a></div>
 </body>
