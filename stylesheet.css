@@ -18,12 +18,10 @@ table td {padding:0;padding-right:0.33em}
 	height:3em;
 	overflow-x:auto;
 	overflow-y:hidden}
-#footerBlock {background-color:#074c4c;
-	position:absolute;
-	bottom:0;
-	width:100%;
+#footerBlock {width:100%;
 	height:1em}
-#footer {position:fixed;
+#footer {background-color:#074c4c;
+	position:fixed;
 	bottom:0;
 	width:100%;
 	height:1em;
@@ -38,6 +36,13 @@ table td {padding:0;padding-right:0.33em}
 	min-width:100%;
 	max-height:1.5em;
 	font-size:150%}
+.optionButton {height:4em}
+.statistics {width:100%}
+.statisticsTitle {background-color:#5fbfbf;
+	max-width:100%;
+	color:#001919}
+.statisticsValue {background-color:#4c9999;
+	width:12em}
 .shopButton {background-color:#4c9999;
 	position:relative;
 	width:12em;
@@ -73,4 +78,5 @@ table td {padding:0;padding-right:0.33em}
 .upgCost {position:absolute;
 	width:100%;
 	bottom:0;
-	text-align:center}
+	text-align:center;
+	font-size:70%}

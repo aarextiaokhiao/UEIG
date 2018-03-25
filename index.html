@@ -9,7 +9,7 @@
 	<div id='points'>10 points</div>
 	<div id='pointsRate'>0/s</div>
 	<div id='tabs'><table><tr><td><button onclick='switchTab("generators")'>Generators</button></td>
-		<td><button onclick='switchTab("options")'>Options</button></td></tr></table></div>
+		<td><button onclick='switchTab("options")'>Options</button></td><td><button onclick='switchTab("statistics")'>Statistics</button></td></tr></table></div>
 	<div id='generators'>
 		<h1>Generators</h1>
 		<div class='shopButton' id='gen1'><div class='genLeft'>1</div><div class='genRight' id='gen1stuff'>x0<br>0/s<br>Cost: 10</div><button onclick='buyGen(1)'></button></div>
@@ -22,15 +22,26 @@
 		<div class='shopButton' id='gen8' style='display:none'><div class='genLeft'>8</div><div class='genRight' id='gen8stuff'>x0<br>0/s<br>Cost: 1.00e8</div><button onclick='buyGen(8)'></button></div>
 		<h1>Upgrades</h1>
 		<div id='unlock1'>(Unlocks at x1 generator 8)</div>
-		<div id='upgrades' style='display:none'><div class='shopButton' id='upg1'><div class='upgDescription'>Bonus for generators is better.</div><div class='upgCost'>Cost: 1.00e10</div><button onclick='buyUpg(1)'></button></div></div>
+		<div id='upgrades' style='display:none'><div class='shopButton' id='upg1'><div class='upgDescription'>Bonus for generators is better</div><div class='upgCost' id='upg1cost'>Cost: 1.00e10</div><button onclick='buyUpg(1)'></button></div>
+			<div class='shopButton' id='upg2'><div class='upgDescription'>Production increase over total generators</div><div class='upgCost' id='upg2cost'>Cost: 1.00e12</div><button onclick='buyUpg(2)'></button></div>
+			<div class='shopButton' id='upg3'><div class='upgDescription'>Production increase over total points</div><div class='upgCost' id='upg3cost'>Cost: 1.00e15</div><button onclick='buyUpg(3)'></button></div>
+			<div class='shopButton' id='upg4'><div class='upgDescription'>???</div><div class='upgCost' id='upg4cost'>Cost: 1.00e18</div><button onclick='buyUpg(4)'></button></div>
+			<div class='shopButton' id='upg5'><div class='upgDescription'>???</div><div class='upgCost' id='upg5cost'>Cost: 1.00e20</div><button onclick='buyUpg(5)'></button></div></div>
 		<h1>Energy</h1>
-		<div id='unlock2'>(Unlocks at x10 generator 8)</div>
+		<div id='unlock2'>(Unlocks at x30 generator 8)</div>
 		<div id='energy' style='display:none'></div>
 	</div>
 	<div id='options' style='display:none'>
 		<h1>Saving</h1>
-		<table><tr><td><button onclick='save()'>Save</button></td><td><button onclick='exportSave()'>Export</button></td><td><button onclick='importSave()'>Import</button></td><td><button onclick='reset(Infinity)'>Reset game</button></td></tr></table>
+		<table><tr><td><button class='optionButton' onclick='save()'>Save</button></td><td><button class='optionButton' onclick='exportSave()'>Export</button></td><td><button class='optionButton' onclick='importSave()'>Import</button></td><td><button class='optionButton' onclick='reset(Infinity)'>RESET THIS GAME</button></td></tr></table>
 		<div id='exportSave' style='display:none'>Here is your export save. Enjoy! <input id='exportText' style='width: 480px'></input></div>
+		<h1>Display</h1>
+		<table><tr><td><button class='optionButton' id='notation' onclick='switchNotation()'>Scientific notation</button></td><td><button class='optionButton' id='updateRate' onclick='switchUpdateRate()'>Update rate:<br>20/s</button></td></tr></table>
+	</div>
+	<div id='statistics' style='display:none'>
+		<h1>Statistics</h1>
+		<table class='statistics'><tr id='statPlaytimeRow'><td class='statisticsTitle'>Time since the start: </td><td class='statisticsValue' id='statPlaytime'></td></tr>
+			<tr id='statTotalRow'><td class='statisticsTitle'>Total points earned:</td><td class='statisticsValue' id='statTotal'></td></tr></table>
 	</div>
 	<div id='footerBlock'></div>
 	<div id='footer'>How to play (coming soon) | Change log (coming soon) | <a href="https://discord.gg/hkf8Msg" target="_newtab">Discord</a></div>
