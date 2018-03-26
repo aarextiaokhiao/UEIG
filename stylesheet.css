@@ -48,6 +48,9 @@ table td {padding:0;padding-right:0.33em}
 	width:12em;
 	height:4em;
 	transition-duration: 0.2s}
+button.shopButton {width:12em;
+	height:4em;
+	font-size:inherit}
 .unboughtable {background-color:#990f0f}
 .bought {background-color:#0f990f}
 .shopButton button {position:absolute;

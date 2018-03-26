@@ -8,7 +8,7 @@
 <body onload='init()'>
 	<div id='points'>10 points</div>
 	<div id='pointsRate'>0/s</div>
-	<div id='tabs'><table><tr><td><button onclick='switchTab("generators")'>Generators</button></td>
+	<div id='tabs'><table><tr><td><button onclick='switchTab("generators")'>Generators</button></td><td id='plasmaButton' style='display:none'><button onclick='switchTab("plasma")'>Plasma</button></td>
 		<td><button onclick='switchTab("options")'>Options</button></td><td><button onclick='switchTab("statistics")'>Statistics</button></td></tr></table></div>
 	<div id='generators'>
 		<h1>Generators</h1>
@@ -22,14 +22,28 @@
 		<div class='shopButton' id='gen8' style='display:none'><div class='genLeft'>8</div><div class='genRight' id='gen8stuff'>x0<br>0/s<br>Cost: 1.00e8</div><button onclick='buyGen(8)'></button></div>
 		<h1>Upgrades</h1>
 		<div id='unlock1'>(Unlocks at x1 generator 8)</div>
-		<div id='upgrades' style='display:none'><div class='shopButton' id='upg1'><div class='upgDescription'>Bonus for generators is better</div><div class='upgCost' id='upg1cost'>Cost: 1.00e10</div><button onclick='buyUpg(1)'></button></div>
-			<div class='shopButton' id='upg2'><div class='upgDescription'>Production increase over total generators</div><div class='upgCost' id='upg2cost'>Cost: 1.00e12</div><button onclick='buyUpg(2)'></button></div>
-			<div class='shopButton' id='upg3'><div class='upgDescription'>Production increase over total points</div><div class='upgCost' id='upg3cost'>Cost: 1.00e15</div><button onclick='buyUpg(3)'></button></div>
-			<div class='shopButton' id='upg4'><div class='upgDescription'>???</div><div class='upgCost' id='upg4cost'>Cost: 1.00e18</div><button onclick='buyUpg(4)'></button></div>
-			<div class='shopButton' id='upg5'><div class='upgDescription'>???</div><div class='upgCost' id='upg5cost'>Cost: 1.00e20</div><button onclick='buyUpg(5)'></button></div></div>
+		<div id='upgrades' style='display:none'><div class='shopButton' id='upg1'><div class='upgDescription'>Bonus for generators is better</div><div class='upgCost' id='upg1cost'></div><button onclick='buyUpg(1)'></button></div>
+			<div class='shopButton' id='upg2'><div class='upgDescription'>Increase production over total generators</div><div class='upgCost' id='upg2cost'></div><button onclick='buyUpg(2)'></button></div>
+			<div class='shopButton' id='upg3'><div class='upgDescription'>Increase production over total points</div><div class='upgCost' id='upg3cost'></div><button onclick='buyUpg(3)'></button></div>
+			<div class='shopButton' id='upg4'><div class='upgDescription'>Increase production by gen. multiplier, 10 times</div><div class='upgCost' id='upg4cost'></div><button onclick='buyUpg(4)'></button></div><br>
+			<div class='shopButton' id='upg5'><div class='upgDescription'>Increase production over the amount</div><div class='upgCost' id='upg5cost'></div><button onclick='buyUpg(5)'></button></div>
+			<div class='shopButton' id='upg6'><div class='upgDescription'>Increase production by 5x</div><div class='upgCost' id='upg6cost'></div><button onclick='buyUpg(6)'></button></div>
+			<div class='shopButton' id='upg7'><div class='upgDescription'>Increase production over playtime</div><div class='upgCost' id='upg7cost'></div><button onclick='buyUpg(7)'></button></div>
+			<div class='shopButton' id='upg8'><div class='upgDescription'>Increase production over itself</div><div class='upgCost' id='upg8cost'></div><button onclick='buyUpg(8)'></button></div>
+		</div>
 		<h1>Energy</h1>
-		<div id='unlock2'>(Unlocks at x30 generator 8)</div>
-		<div id='energy' style='display:none'></div>
+		<div id='unlock2'>(Unlocks at x38 generator 8)</div>
+		<div id='energy' style='display:none'>
+			<div class='shopButton'><div class='upgDescription'>Consume 50% of points to energy</div><div class='upgCost' id='consumeAmount'></div><button onclick='consumePoints()'></button></div>
+			<div>Consuming points will turn 50% of all your points to consumed points.</div><br>
+			<div id='energyAmount'></div>
+			<div id='energyGen' class='shopButton' style='display:inline-block'><div class='upgDescription'>Power 1 energy to generators</div><div class='upgCost' id='genPower'></div><button onclick='powerEnergy(1)'></button></div>
+			<div class='shopButton' id='energyPlasma'><div class='upgDescription'>Power 1 energy to plasma</div><div class='upgCost' id='plasmaPower'></div><button onclick='powerEnergy(2)'></button></div>
+		</div>
+		<div id='unlockLayer1' style='display:none'>(Gaining plasma unlocks at x50 generator 8!)</div>
+	</div>
+	<div id='plasma' style='display:none'>
+		<h1>Gaining plasma is coming soon in v0.2!</h1>
 	</div>
 	<div id='options' style='display:none'>
 		<h1>Saving</h1>
@@ -41,7 +55,8 @@
 	<div id='statistics' style='display:none'>
 		<h1>Statistics</h1>
 		<table class='statistics'><tr id='statPlaytimeRow'><td class='statisticsTitle'>Time since the start: </td><td class='statisticsValue' id='statPlaytime'></td></tr>
-			<tr id='statTotalRow'><td class='statisticsTitle'>Total points earned:</td><td class='statisticsValue' id='statTotal'></td></tr></table>
+			<tr id='statTotalRow'><td class='statisticsTitle'>Total points earned:</td><td class='statisticsValue' id='statTotal'></td></tr>
+			<tr id='statConsumeRow'><td class='statisticsTitle'>Consumed points:</td><td class='statisticsValue' id='statConsume'></td></tr></table>
 	</div>
 	<div id='footerBlock'></div>
 	<div id='footer'>How to play (coming soon) | Change log (coming soon) | <a href="https://discord.gg/hkf8Msg" target="_newtab">Discord</a></div>

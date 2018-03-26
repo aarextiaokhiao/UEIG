@@ -29,7 +29,7 @@ function invisibleElement(elementID) {
 	
 //Main game functions
 var player={version:0.1,
-	build:2,
+	build:3,
 	playtime:0,
 	points:new Decimal(10),
 	totalPoints:new Decimal(0),
@@ -51,8 +51,8 @@ var lastSave=0
 var notationArray=['Scientific','Engineering','Standard','Logarithm']
 var tab='generators'
 var tabDisplayed=tab
-var costs={gens:[],upgrades:[1e10,1e12,1e15,1e18,1e20],energy:0}
-var upgradeRequirements=[1,4,11,18,23]
+var costs={gens:[],upgrades:[1e10,2e11,3e13,5e15,2e17,1e19,1e21,1e24],energy:0}
+var upgradeRequirements=[1,4,9,14,18,22,25,32]
 var generatorRates=[]
 var pointsPerSecond=0
 var pointsPerTick=0
@@ -87,6 +87,7 @@ function gameTick() {
 		
 		player.points=player.points.add(pointsPerTick)
 		player.totalPoints=player.totalPoints.add(pointsPerTick)
+		unpoweredEnergy=BigInteger.subtract(player.energy.amount,BigInteger.add(player.energy.genPower,player.energy.plasmaPower))
 	}
 	player.lastTick=currentTime
 	
@@ -97,6 +98,11 @@ function gameTick() {
 		showElement(tab,'block')
 		hideElement(tabDisplayed)
 		tabDisplayed=tab
+	}
+	if (Decimal.gt(player.generatorsBought[7],49)) {
+		showElement('plasmaButton','table-cell')
+	} else {
+		hideElement('plasmaButton')
 	}
 	if (tab=='generators') {
 		for (var tier=1;tier<9;tier++) {
@@ -112,29 +118,58 @@ function gameTick() {
 				hideElement('gen'+tier)
 			}
 		}
-		if (player.generatorsBought[7]>0) {
+		if (Decimal.gt(player.generatorsBought[7],0)) {
 			hideElement('unlock1')
 			showElement('upgrades','block')
-			for (var id=1;id<6;id++) {
-				if (player.upgrades.includes(id)) {
-					updateClass('upg'+id,'shopButton bought')
-				} else if (player.points.gte(costs.upgrades[id-1])&&player.generatorsBought[7]>=upgradeRequirements[id-1]) {
-					updateClass('upg'+id,'shopButton')
+			for (var id=1;id<9;id++) {
+				if (id==1?true:player.upgrades.includes(id-1)) {
+					showElement('upg'+id,'inline-block')
+					if (player.upgrades.includes(id)) {
+						updateClass('upg'+id,'shopButton bought')
+					} else if (player.points.gte(costs.upgrades[id-1])&&player.generatorsBought[7]>=upgradeRequirements[id-1]) {
+						updateClass('upg'+id,'shopButton')
+					} else {
+						updateClass('upg'+id,'shopButton unboughtable')
+					}
+					updateElement('upg'+id+'cost','Cost: '+format(costs.upgrades[id-1])+'<br>(requires '+upgradeRequirements[id-1]+'x generator 8s)')
 				} else {
-					updateClass('upg'+id,'shopButton unboughtable')
+					hideElement('upg'+id)
 				}
-				updateElement('upg'+id+'cost','Cost: '+format(costs.upgrades[id-1])+'<br>(requires '+upgradeRequirements[id-1]+'x generator 8s)')
 			}
 		} else {
 			showElement('unlock1','block')
 			hideElement('upgrades')
 		}
-		if (player.generatorsBought[7]>29) {
+		if (Decimal.gt(player.generatorsBought[7],37)) {
 			hideElement('unlock2')
 			showElement('energy','block')
+			updateElement('energyAmount','You have '+format(player.energy.amount)+' energy, which '+format(BigInteger.subtract(player.energy.amount,BigInteger.add(player.energy.genPower,player.energy.plasmaPower)))+' are unpowered<br>Next at '+format(Decimal.pow(4,player.energy.amount).times(1e26))+' consumed points')
+			updateElement('consumeAmount','Consumed: '+format(player.energy.consumedPoints))
+			updateElement('genPower','Powered: '+format(player.energy.genPower))
+			if (Decimal.gt(unpoweredEnergy,0)) {
+				updateClass('energyGen','shopButton')
+			} else {
+				updateClass('energyGen','shopButton unboughtable')
+			}
+			if (Decimal.gt(player.generatorsBought[7],49)) {
+				showElement('energyPlasma','inline-block')
+				updateElement('plasmaPower','Powered: '+format(player.energy.plasmaPower))
+				if (Decimal.gt(unpoweredEnergy,0)) {
+					updateClass('energyPlasma','shopButton')
+				} else {
+					updateClass('energyPlasma','shopButton unboughtable')
+				}
+			} else {
+				hideElement('energyPlasma')
+			}
 		} else {
 			showElement('unlock2','block')
 			hideElement('energy')
+		}
+		if (Decimal.gt(player.generatorsBought[7],37)&&Decimal.lt(player.generatorsBought[7],50)) {
+			showElement('unlockLayer1','block')
+		} else {
+			hideElement('unlockLayer1')
 		}
 	}
 	if (tab=='options') {
@@ -148,6 +183,12 @@ function gameTick() {
 			updateElement('statTotal',format(player.totalPoints))
 		} else {
 			hideElement('statTotalRow')
+		}
+		if (player.energy.consumedPoints.gt(0)) {
+			showElement('statConsumeRow','table-row')
+			updateElement('statConsume',format(player.energy.consumedPoints))
+		} else {
+			hideElement('statConsumeRow')
 		}
 	}
 }
@@ -469,9 +510,19 @@ function updateCosts(id='all') {
 
 function getGenMult(tier) {
 	var mult=Decimal.pow(10,tier-1)
-	if (Decimal.gt(player.generatorsBought[tier-1],10)) mult=mult.times(Decimal.pow(Math.pow(1.111111111111111111,player.upgrades.includes(1)?(tier+4)/5:1),BigInteger.subtract(player.generatorsBought[tier-1],10)))
+	
+	var totalAmountUpg4=player.generatorsBought[tier-1]
+	if (player.upgrades.includes(4)) totalAmountUpg4=BigInteger.add(totalAmountUpg4,10)
+	
+	if (player.upgrades.includes(1)) mult=mult.times(Decimal.pow(Math.pow(10/9,(tier+4)/5),totalAmountUpg4))
+	else if (Decimal.gt(totalAmountUpg4,10)) mult=mult.times(Decimal.pow(10/9,BigInteger.subtract(totalAmountUpg4,10)))
 	if (player.upgrades.includes(2)) mult=mult.times(Decimal.pow(1.01,BigInteger.add(BigInteger.add(BigInteger.add(BigInteger.add(BigInteger.add(BigInteger.add(BigInteger.add(player.generatorsBought[0],player.generatorsBought[2]),player.generatorsBought[3]),player.generatorsBought[1]),player.generatorsBought[4]),player.generatorsBought[5]),player.generatorsBought[6]),player.generatorsBought[7])))
 	if (player.upgrades.includes(3)) mult=mult.times(player.totalPoints.pow(0.1))
+	if (player.upgrades.includes(5)) mult=mult.times(Decimal.pow(10/9,player.generatorsBought[tier-1]))
+	if (player.upgrades.includes(6)) mult=mult.times(5)
+	if (player.upgrades.includes(7)) mult=mult.times(Math.sqrt(1+Math.log10(1+player.playtime)/Math.log10(2)))
+	if (player.upgrades.includes(8)) mult=mult.times(Decimal.mul(new Decimal(mult.log10()),0.4342944819032518))
+	mult=mult.times(Decimal.pow(Math.pow(4,0.2),player.energy.genPower))
 	return mult.times(player.generatorsBought[tier-1])
 }
 
@@ -489,5 +540,22 @@ function buyUpg(id) {
 			player.points=player.points.sub(costs.upgrades[id-1])
 			player.upgrades.push(id)
 		}
+	}
+}
+
+function consumePoints() {
+	var amount=player.points.div(2)
+	player.points=player.points.sub(amount)
+	player.energy.consumedPoints=player.energy.consumedPoints.add(amount)
+	player.energy.amount=player.energy.consumedPoints.div(1e25).log(4)
+	if (typeof(player.energy.amount)=='number') player.energy.amount=Math.floor(player.energy.amount)
+	if (Decimal.lt(player.energy.amount,0)) player.energy.amount=0
+}
+
+function powerEnergy(id) {
+	if (Decimal.gt(unpoweredEnergy,0)) {
+		if (id==1) player.energy.genPower=BigInteger.add(player.energy.genPower,1)
+		else player.energy.plasmaPower=BigInteger.add(player.energy.plasmaPower,1)
+		unpoweredEnergy=BigInteger.subtract(unpoweredEnergy,1)
 	}
 }
