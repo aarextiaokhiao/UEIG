@@ -28,8 +28,8 @@ function invisibleElement(elementID) {
 }
 	
 //Main game functions
-var player={version:0.1,
-	build:3,
+var player={version:0.2,
+	build:1,
 	playtime:0,
 	points:new Decimal(10),
 	totalPoints:new Decimal(0),
@@ -39,6 +39,14 @@ var player={version:0.1,
 		amount:0,
 		genPower:0,
 		plasmaPower:0},
+	prestigesCount:[0],
+	plasma:new Decimal(0),
+	plasmaPlaytime:0,
+	boosts:[new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0)],
+	waitingToTransfer:[new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0)],
+	currentChallenge:0,
+	challengesCompleted:{},
+	freeGeneratorsBought:0,
 	notation:0,
 	updateRate:20,
 	lastTick:new Date().getTime()}
@@ -57,6 +65,7 @@ var generatorRates=[]
 var pointsPerSecond=0
 var pointsPerTick=0
 var unpoweredEnergy=0
+var plasmaGain=0
 
 function init() {
 	updateCosts()
@@ -76,6 +85,7 @@ function gameTick() {
 		
 		var diff=(currentTime-player.lastTick)/1000
 		player.playtime+=diff
+		player.plasmaPlaytime+=diff
 		
 		//Change the values!
 		pointsPerSecond=new Decimal(0)
@@ -99,7 +109,7 @@ function gameTick() {
 		hideElement(tabDisplayed)
 		tabDisplayed=tab
 	}
-	if (Decimal.gt(player.generatorsBought[7],49)) {
+	if (Decimal.gt(player.generatorsBought[7],49)||player.prestigesCount[0]>0||player.plasma.gt(0)) {
 		showElement('plasmaButton','table-cell')
 	} else {
 		hideElement('plasmaButton')
@@ -172,6 +182,9 @@ function gameTick() {
 			hideElement('unlockLayer1')
 		}
 	}
+	if (tab=='plasma') {
+		updateElement('plasmaGain','You will gain '+format(plasmaGain)+' plasma')
+	}
 	if (tab=='options') {
 		updateElement('notation',notationArray[player.notation]+' notation')
 		updateElement('updateRate','Update rate:<br>'+(player.updateRate==Number.MAX_VALUE?'Unlimited':player.updateRate+'/s'))
@@ -189,6 +202,15 @@ function gameTick() {
 			updateElement('statConsume',format(player.energy.consumedPoints))
 		} else {
 			hideElement('statConsumeRow')
+		}
+		if (player.prestigesCount[0]>0||player.plasma.gt(0)) {
+			showElement('statPlasmaCountRow','table-row')
+			showElement('statPlasmaPlaytimeRow','table-row')
+			updateElement('statPlasmaCount',player.prestigesCount[0]+'x')
+			updateElement('statPlasmaPlaytime',Math.floor(player.plasmaPlaytime)+'s')
+		} else {
+			hideElement('statPlasmaCountRow')
+			hideElement('statPlasmaPlaytimeRow')
 		}
 	}
 }
@@ -248,12 +270,39 @@ function load(save) {
 			if (savefile.build<2) {
 				savefile.notation=0
 			}
+			savefile.build=0
+		}
+		if (savefile.version<0.3) {
+			if (savefile.build<1) {
+				savefile.prestigesCount=[0],
+				savefile.plasma=0
+				savefile.plasmaPlaytime=savefile.playtime
+				savefile.boosts=[0,0,0,0,0,0]
+				savefile.waitingToTransfer=[0,0,0,0,0,0]
+				savefile.currentChallenge=0
+				savefile.challengesCompleted={}
+				savefile.freeGeneratorsBought=0
+			}
 		}
 
 		//Turn string to Decimal on some values
 		savefile.points=new Decimal(savefile.points)
 		savefile.totalPoints=new Decimal(savefile.totalPoints)
 		savefile.energy.consumedPoints=new Decimal(savefile.energy.consumedPoints)
+		savefile.plasma=new Decimal(savefile.plasma)
+		for (var tier=1;tier<9;tier++) {
+			savefile.generatorsBought[tier-1]=turnIntoBigInt(savefile.generatorsBought[tier-1])
+		}
+		for (var id=0;id<6;id++) {
+			savefile.boosts[id]=new Decimal(savefile.boosts[id])
+			savefile.waitingToTransfer[id]=new Decimal(savefile.waitingToTransfer[id])
+		}
+
+		//Turn string to BigInteger on some values
+		savefile.energy.amount=turnIntoBigInt(savefile.energy.amount)
+		savefile.energy.genPower=turnIntoBigInt(savefile.energy.genPower)
+		savefile.energy.plasmaPower=turnIntoBigInt(savefile.energy.plasmaPower)
+		savefile.freeGeneratorsBought=turnIntoBigInt(savefile.freeGeneratorsBought)
 		
 		//Check if it is compatible
 		if (player.version<savefile.version) throw 'Since you are playing in version '+player.version+', your savefile that is updated in version '+savefile.version+' has errors to the version you are playing.\nYour savefile has been discarded.'
@@ -269,8 +318,9 @@ function load(save) {
 		
 		player=savefile
 		updateCosts()
-		hideElement('exportSave')
+		updatePlasmaGain()
 		
+		hideElement('exportSave')
 		console.log('Save loaded!')
 		
 		gameLoopInterval=setInterval(function(){gameLoop()},1000/player.updateRate)
@@ -299,10 +349,12 @@ function importSave() {
 	}
 }
 
-function reset(tier) {
-	if (tier==Infinity?confirm('If you reset, everything including the save will be lost and you have to start over! Are you sure to do that?'):true) {
+function reset(tier,challid=0) {
+		
 		if (tier==Infinity) {
 			//Hard reset
+			if (!confirm('If you reset, everything including the save will be lost and you have to start over! Are you sure to do that?')) return
+			
 			player.playtime=0
 			player.totalPoints=new Decimal(0)
 			player.notation=0
@@ -313,7 +365,14 @@ function reset(tier) {
 			
 			hideElement('exportSave')
 		}
-		//Tier 1 reset
+		if (tier>2) {
+			//Tier 2 reset
+			player.boosts=[new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0)]
+			player.waitingToTransfer=[new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0),new Decimal(0)]
+		}
+		//Plasma reset
+		if (tier==1&&challid>0) if (!confirm('You have to reach the specified goal before the boost will be stronger. You will not gain plasma if you start the challenge.')) return
+		
 		player.points=new Decimal(10)
 		player.generatorsBought=[0,0,0,0,0,0,0,0,0]
 		player.upgrades=[]
@@ -322,7 +381,18 @@ function reset(tier) {
 			genPower:0,
 			plasmaPower:0}
 		updateCosts('gens')
-	}
+		
+		player.prestigesCount[0]=(tier==1)?((challid==0)?player.prestigesCount[0]+1:player.prestigesCount[0]):0
+		player.plasma=(tier==1)?((challid==0)?player.plasma.add(plasmaGain):player.plasma):new Decimal(0)
+		player.plasmaPlaytime=0
+		player.currentChallenge=0
+		player.challengesCompleted={}
+		player.freeGeneratorsBought=0
+		updatePlasmaGain()
+}
+
+function checkToReset(tier) {
+	if (tier==1&&Decimal.gt(player.generatorsBought[7],49)) reset(1)
 }
 
 function format(value) {
@@ -499,6 +569,17 @@ function switchTab(tabName) {
 	tab=tabName
 }
 
+function turnIntoBigInt(num) {
+	if (typeof(num)=='object') {
+		if (Decimal.gt(num,9007199254740992)) {
+			return BigInteger.parseInt(num)
+		} else {
+			var parsed=BigInteger.parseInt(num)
+			if (BigInteger.compareTo(parsed,9007199254740992)>0) return parsed
+		}
+	}
+	return num
+}
 //Game functions
 function updateCosts(id='all') {
 	if (id=='gens'||id=='all') {
@@ -531,6 +612,8 @@ function buyGen(tier) {
 		player.points=player.points.sub(costs.gens[tier-1])
 		player.generatorsBought[tier-1]=BigInteger.add(player.generatorsBought[tier-1],1)
 		updateCosts('gens')
+		
+		if (tier==8) updatePlasmaGain()
 	}
 }
 
@@ -554,8 +637,17 @@ function consumePoints() {
 
 function powerEnergy(id) {
 	if (Decimal.gt(unpoweredEnergy,0)) {
-		if (id==1) player.energy.genPower=BigInteger.add(player.energy.genPower,1)
-		else player.energy.plasmaPower=BigInteger.add(player.energy.plasmaPower,1)
+		if (id==1) {
+			player.energy.genPower=BigInteger.add(player.energy.genPower,1)
+		} else {
+			player.energy.plasmaPower=BigInteger.add(player.energy.plasmaPower,1)
+			updatePlasmaGain()
+		}
 		unpoweredEnergy=BigInteger.subtract(unpoweredEnergy,1)
 	}
+}
+
+function updatePlasmaGain() {
+	if (Decimal.lt(player.generatorsBought[7],50)) plasmaGain=new Decimal(0)
+	else plasmaGain=new Decimal(1)
 }

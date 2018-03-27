@@ -43,7 +43,8 @@
 		<div id='unlockLayer1' style='display:none'>(Gaining plasma unlocks at x50 generator 8!)</div>
 	</div>
 	<div id='plasma' style='display:none'>
-		<h1>Gaining plasma is coming soon in v0.2!</h1>
+		<h1>Resetting</h1>
+		<div class='shopButton'><div class='upgDescription'>Reset the game and gain plasma!</div><div class='upgCost' id='plasmaGain'></div><button onclick='checkToReset(1)'></button></div>
 	</div>
 	<div id='options' style='display:none'>
 		<h1>Saving</h1>
@@ -56,7 +57,9 @@
 		<h1>Statistics</h1>
 		<table class='statistics'><tr id='statPlaytimeRow'><td class='statisticsTitle'>Time since the start: </td><td class='statisticsValue' id='statPlaytime'></td></tr>
 			<tr id='statTotalRow'><td class='statisticsTitle'>Total points earned:</td><td class='statisticsValue' id='statTotal'></td></tr>
-			<tr id='statConsumeRow'><td class='statisticsTitle'>Consumed points:</td><td class='statisticsValue' id='statConsume'></td></tr></table>
+			<tr id='statConsumeRow'><td class='statisticsTitle'>Consumed points:</td><td class='statisticsValue' id='statConsume'></td></tr>
+			<tr id='statPlasmaCountRow'><td class='statisticsTitle'>Plasma resets:</td><td class='statisticsValue' id='statPlasmaCount'></td></tr>
+			<tr id='statPlasmaPlaytimeRow'><td class='statisticsTitle'>Time since latest plasma reset:</td><td class='statisticsValue' id='statPlasmaPlaytime'></td></tr></table>
 	</div>
 	<div id='footerBlock'></div>
 	<div id='footer'>How to play (coming soon) | Change log (coming soon) | <a href="https://discord.gg/hkf8Msg" target="_newtab">Discord</a></div>
